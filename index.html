@@ -499,6 +499,74 @@ async function showDashboard(){
     loadAdminProducts();
 
   }
+  let adminProductRows = [];
+
+async function loadAdminProducts(){
+
+    const container = document.getElementById("adminProducts");
+
+    container.innerHTML = "Loading products...";
+
+    if(!supabaseClient || !currentUser){
+        container.textContent = "Please log in first.";
+        return;
+    }
+
+    const {data,error}=await supabaseClient
+        .from("products")
+        .select("*")
+        .order("created_at",{ascending:false});
+
+    if(error){
+        container.textContent = "Could not load products: " + error.message;
+        console.error(error);
+        return;
+    }
+
+    adminProductRows = data || [];
+
+    if(adminProductRows.length===0){
+        container.textContent = "No products have been added yet.";
+        return;
+    }
+
+    container.innerHTML = adminProductRows.map(product => {
+
+        const safeName = String(product.name || "").replace(/[&<>"']/g, character => ({
+            "&":"&amp;",
+            "<":"&lt;",
+            ">":"&gt;",
+            '"':"&quot;",
+            "'":"&#39;"
+        })[character]);
+
+        return `
+            <div style="background:white;padding:15px;margin:12px 0;border-radius:8px;border:1px solid #ddd">
+
+                <h4>${safeName}</h4>
+
+                <p>Price: ₦${Number(product.price || 0).toLocaleString()}</p>
+
+                <p>Stock: ${Number(product.stock || 0)}</p>
+
+                <p>Category: ${String(product.category || "")}</p>
+
+                <button onclick="editProduct('${product.id}')"
+                style="padding:10px;margin-right:8px">
+                    Edit
+                </button>
+
+                <button onclick="deleteProduct('${product.id}')"
+                style="padding:10px;background:#b00020;color:white">
+                    Delete
+                </button>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
 
 function showSignedOut(){
 currentUser=null;
