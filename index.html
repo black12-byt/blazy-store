@@ -445,17 +445,37 @@ el.textContent=message;
 el.className="account-message "+(type||"");
 }
 
-function showDashboard(){
-document.getElementById("authView").style.display="none";
-document.getElementById("dashboardView").style.display="block";
+async function showDashboard(){
 
-document.getElementById("dashboardName").textContent=
-(currentUser.user_metadata&&currentUser.user_metadata.full_name)||"Not provided";
+    document.getElementById("adminView").style.display="none";
+    document.getElementById("accountModal").classList.add("open");
 
-document.getElementById("dashboardEmail").textContent=currentUser.email||"";
+    document.getElementById("authView").style.display="none";
+    document.getElementById("dashboardView").style.display="block";
 
-document.getElementById("accountButton").textContent="My Dashboard";
-}
+    document.getElementById("dashboardName").textContent =
+    (currentUser.user_metadata && currentUser.user_metadata.full_name) || "Not provided";
+
+    document.getElementById("dashboardEmail").textContent = currentUser.email || "";
+
+    document.getElementById("accountButton").textContent = "My Dashboard";
+
+    const adminButton = document.getElementById("adminButton");
+    adminButton.style.display = "none";
+
+    if (!supabaseClient || !currentUser) return;
+
+    const { data, error } = await supabaseClient.rpc("is_admin");
+
+    if (error) {
+        console.error("Admin verification failed:", error.message);
+        return;
+    }
+
+    if (data === true) {
+        adminButton.style.display = "block";
+    }
+  }
 
 function showSignedOut(){
 currentUser=null;
