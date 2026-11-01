@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,21 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blazy Store | Fashion & Lifestyle</title>
 <meta name="description" content="Discover stylish clothing, shoes, bags and accessories at Blazy Store.">
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#faf9f6;color:#171717}
 header{background:#111;color:white;padding:18px 6%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
 .logo{font-size:25px;font-weight:900;letter-spacing:1px}
 .logo span{color:#d6ad65}
-nav{display:flex;gap:22px;align-items:center}
+nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 nav a{color:white;text-decoration:none;font-size:14px}
-.cart-btn{background:#d6ad65;color:#111;padding:10px 16px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
+.cart-btn,.account-btn{background:#d6ad65;color:#111;padding:10px 15px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
+.account-btn{background:white}
+
 .hero{min-height:440px;background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.15)),url('https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1600&q=85') center/cover;display:flex;align-items:center;padding:55px 8%;color:white}
 .hero-content{max-width:520px}
 .hero small{color:#e6bd77;letter-spacing:3px;font-weight:bold}
 .hero h1{font-size:clamp(38px,7vw,65px);margin:18px 0;line-height:1.08}
 .hero p{line-height:1.7;color:#eee;margin-bottom:25px}
-.gold-btn{display:inline-block;background:#d6ad65;color:#111;text-decoration:none;padding:14px 25px;border-radius:4px;font-weight:bold;border:0;cursor:pointer}
+.gold-btn{display:inline-block;background:#d6ad65;color:#111;text-decoration:none;padding:14px 25px;border-radius:4px;font-weight:bold}
+
 .section{padding:55px 6%}
 .section-heading{text-align:center;margin-bottom:28px}
 .section-heading h2{font-size:30px;margin-bottom:9px}
@@ -37,142 +40,511 @@ nav a{color:white;text-decoration:none;font-size:14px}
 .product-info h3{font-size:16px;margin:8px 0}
 .price{font-weight:bold;color:#9b7136;margin:10px 0}
 .add{width:100%;padding:12px;background:#111;color:white;border:0;border-radius:4px;cursor:pointer}
-.add:hover{background:#a47b42}
 .empty{text-align:center;color:#777;padding:35px;grid-column:1/-1}
+
 .benefits{background:#f0ece4;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:25px;padding:35px 6%;text-align:center}
 .benefits h3{margin-bottom:8px}
 .benefits p{color:#666;font-size:14px}
 footer{background:#111;color:#eee;padding:40px 6%;text-align:center}
 footer p{color:#aaa;margin-top:10px;font-size:14px}
+
 .overlay{display:none;position:fixed;inset:0;background:#0008;z-index:20}
+.overlay.open{display:block}
 .cart-panel{position:fixed;right:-420px;top:0;width:min(390px,100%);height:100%;background:white;z-index:21;padding:22px;transition:.3s;overflow:auto}
 .cart-panel.open{right:0}
-.overlay.open{display:block}
 .cart-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
 .close{border:0;background:none;font-size:27px;cursor:pointer}
 .cart-item{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eee;padding:14px 0}
 .cart-item button{border:0;background:none;color:#a33;cursor:pointer}
 .total{font-size:20px;font-weight:bold;margin:22px 0}
 .checkout{width:100%;padding:14px;background:#111;color:white;border:0;border-radius:4px;font-weight:bold;cursor:pointer}
-@media(max-width:650px){header{padding:15px 4%}nav{gap:12px}nav a{font-size:12px}.logo{font-size:20px}.hero{min-height:390px;padding:40px 6%}.section{padding:42px 4%}.product img{height:220px}}
+
+/* Customer account */
+.account-modal{display:none;position:fixed;inset:0;z-index:40;background:#0009;align-items:center;justify-content:center;padding:18px}
+.account-modal.open{display:flex}
+.account-card{width:min(440px,100%);max-height:90vh;overflow:auto;background:white;border-radius:10px;padding:25px}
+.account-card h2{margin-bottom:8px}
+.muted{color:#777;font-size:14px;line-height:1.5;margin-bottom:18px}
+.account-close{float:right;border:0;background:none;font-size:26px;cursor:pointer}
+.account-tabs{display:flex;gap:8px;margin:18px 0}
+.account-tabs button{flex:1;padding:11px;border:1px solid #ddd;background:#f6f6f6;border-radius:5px;cursor:pointer}
+.account-tabs button.active{background:#111;color:white}
+.account-form label{display:block;font-size:13px;font-weight:bold;margin:12px 0 6px}
+.account-form input{width:100%;padding:12px;border:1px solid #ccc;border-radius:5px;font-size:15px}
+.account-submit{width:100%;padding:13px;background:#111;color:white;border:0;border-radius:5px;font-weight:bold;margin-top:18px;cursor:pointer}
+.account-submit:disabled{opacity:.6}
+.account-message{font-size:14px;line-height:1.5;margin-top:14px;overflow-wrap:anywhere}
+.error{color:#a12626}
+.success{color:#176b38}
+.dashboard-details{background:#f6f3ed;border-radius:7px;padding:15px;margin:18px 0;line-height:1.9;font-size:14px;overflow-wrap:anywhere}
+.dashboard-actions{display:flex;gap:10px}
+.dashboard-actions button{flex:1;padding:12px;border:0;border-radius:5px;cursor:pointer;font-weight:bold}
+#signOutBtn{background:#111;color:white}
+#closeDashboardBtn{background:#eee;color:#111}
+
+@media(max-width:650px){
+header{padding:15px 4%;flex-wrap:wrap;gap:12px}
+nav{gap:9px}
+nav a{font-size:12px}
+.logo{font-size:20px}
+.hero{min-height:390px;padding:40px 6%}
+.section{padding:42px 4%}
+.product img{height:220px}
+}
 </style>
 </head>
+
 <body>
+
 <header>
-  <div class="logo">BLAZY<span> STORE</span></div>
-  <nav>
-    <a href="#home">Home</a>
-    <a href="#shop">Shop</a>
-    <button class="cart-btn" onclick="openCart()">Cart (<span id="cartCount">0</span>)</button>
-  </nav>
+<div class="logo">BLAZY<span> STORE</span></div>
+<nav>
+<a href="#home">Home</a>
+<a href="#shop">Shop</a>
+<button class="account-btn" id="accountButton" onclick="openAccount()">My Account</button>
+<button class="cart-btn" onclick="openCart()">Cart (<span id="cartCount">0</span>)</button>
+</nav>
 </header>
 
 <section class="hero" id="home">
-  <div class="hero-content">
-    <small>STYLE THAT SPEAKS</small>
-    <h1>Discover Your Style.</h1>
-    <p>Explore fashion that makes every moment special. Find your next favourite look at Blazy Store.</p>
-    <a class="gold-btn" href="#shop">SHOP COLLECTION</a>
-  </div>
+<div class="hero-content">
+<small>STYLE THAT SPEAKS</small>
+<h1>Discover Your Style.</h1>
+<p>Explore fashion that makes every moment special. Find your next favourite look at Blazy Store.</p>
+<a class="gold-btn" href="#shop">SHOP COLLECTION</a>
+</div>
 </section>
 
 <section class="section" id="shop">
-  <div class="section-heading">
-    <h2>Our Collection</h2>
-    <p>Find something you'll love.</p>
-  </div>
-  <input class="search" id="search" placeholder="Search products..." oninput="renderProducts()">
-  <div class="categories">
-    <button class="active" onclick="setCategory('All',this)">All</button>
-    <button onclick="setCategory('Men',this)">Men</button>
-    <button onclick="setCategory('Women',this)">Women</button>
-    <button onclick="setCategory('Shoes',this)">Shoes</button>
-    <button onclick="setCategory('Bags',this)">Bags</button>
-    <button onclick="setCategory('Accessories',this)">Accessories</button>
-  </div>
-  <div class="products" id="products"></div>
+<div class="section-heading">
+<h2>Our Collection</h2>
+<p>Find something you'll love.</p>
+</div>
+
+<input class="search" id="search" placeholder="Search products..." oninput="renderProducts()">
+
+<div class="categories">
+<button class="active" onclick="setCategory('All',this)">All</button>
+<button onclick="setCategory('Men',this)">Men</button>
+<button onclick="setCategory('Women',this)">Women</button>
+<button onclick="setCategory('Shoes',this)">Shoes</button>
+<button onclick="setCategory('Bags',this)">Bags</button>
+<button onclick="setCategory('Accessories',this)">Accessories</button>
+</div>
+
+<div class="products" id="products"></div>
 </section>
 
 <section class="benefits">
-  <div><h3>Quality Fashion</h3><p>Carefully selected styles.</p></div>
-  <div><h3>Easy Shopping</h3><p>A simple shopping experience.</p></div>
-  <div><h3>Customer Support</h3><p>We're here to help you.</p></div>
+<div><h3>Quality Fashion</h3><p>Carefully selected styles.</p></div>
+<div><h3>Easy Shopping</h3><p>A simple shopping experience.</p></div>
+<div><h3>Customer Support</h3><p>We're here to help you.</p></div>
 </section>
 
 <footer>
-  <div class="logo">BLAZY<span> STORE</span></div>
-  <p>Fashion. Confidence. Your Style.</p>
-  <p>© <span id="year"></span> Blazy Store. All rights reserved.</p>
+<div class="logo">BLAZY<span> STORE</span></div>
+<p>Fashion. Confidence. Your Style.</p>
+<p>© <span id="year"></span> Blazy Store. All rights reserved.</p>
 </footer>
 
 <div class="overlay" id="overlay" onclick="closeCart()"></div>
+
 <aside class="cart-panel" id="cartPanel">
-  <div class="cart-top">
-    <h2>Your Shopping Cart</h2>
-    <button class="close" onclick="closeCart()">×</button>
-  </div>
-  <div id="cartItems"></div>
-  <div class="total">Total: ₦<span id="cartTotal">0</span></div>
-  <button class="checkout" onclick="checkout()">Continue to checkout</button>
+<div class="cart-top">
+<h2>Your Shopping Cart</h2>
+<button class="close" onclick="closeCart()">×</button>
+</div>
+<div id="cartItems"></div>
+<div class="total">Total: ₦<span id="cartTotal">0</span></div>
+<button class="checkout" onclick="checkout()">Continue to checkout</button>
 </aside>
 
+<!-- CUSTOMER REGISTRATION AND LOGIN -->
+
+<div class="account-modal" id="accountModal" onclick="if(event.target===this)closeAccount()">
+<div class="account-card">
+
+<button class="account-close" onclick="closeAccount()">×</button>
+
+<div id="authView">
+<h2>Welcome to Blazy Store</h2>
+<p class="muted">Create an account or sign in to access your customer account.</p>
+
+<div class="account-tabs">
+<button id="loginTab" class="active" onclick="showAuthMode('login')">Log in</button>
+<button id="signupTab" onclick="showAuthMode('signup')">Create account</button>
+</div>
+
+<form class="account-form" id="authForm">
+
+<div id="nameField" style="display:none">
+<label for="fullName">Full name</label>
+<input id="fullName" type="text" autocomplete="name" placeholder="Your full name">
+</div>
+
+<label for="authEmail">Email address</label>
+<input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com">
+
+<label for="authPassword">Password</label>
+<input id="authPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters">
+
+<button class="account-submit" id="authSubmit" type="submit">Log in</button>
+</form>
+
+<p id="authMessage" class="account-message" aria-live="polite"></p>
+</div>
+
+<!-- CUSTOMER DASHBOARD -->
+
+<div id="dashboardView" style="display:none">
+<h2>My Customer Dashboard</h2>
+<p class="muted">Your Blazy Store account details.</p>
+
+<div class="dashboard-details">
+<div><strong>Name:</strong> <span id="dashboardName">—</span></div>
+<div><strong>Email:</strong> <span id="dashboardEmail">—</span></div>
+</div>
+
+<div class="dashboard-actions">
+<button id="signOutBtn" onclick="signOut()">Log out</button>
+<button id="closeDashboardBtn" onclick="closeAccount()">Close</button>
+</div>
+
+<p id="dashboardMessage" class="account-message"></p>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+
+// SUPABASE CONNECTION
+const SUPABASE_URL = "https://jbdiyyjzphunyiefsofc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_6_s73n8HEXPnrdOWlww3GQ_gBgoHmsC";
+
+let supabaseClient = null;
+let currentUser = null;
+let authMode = "login";
+
+if(window.supabase){
+supabaseClient = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+}
+
+// PRODUCTS
 const products = [
- {id:1,name:"Classic Men's Outfit",category:"Men",price:35000,image:"https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=700&q=80"},
- {id:2,name:"Elegant Women's Dress",category:"Women",price:42000,image:"https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=700&q=80"},
- {id:3,name:"Premium Sneakers",category:"Shoes",price:28000,image:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80"},
- {id:4,name:"Luxury Handbag",category:"Bags",price:32000,image:"https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=700&q=80"},
- {id:5,name:"Casual Men's Shirt",category:"Men",price:18000,image:"https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=700&q=80"},
- {id:6,name:"Women's Fashion Set",category:"Women",price:39000,image:"https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=80"},
- {id:7,name:"Fashion Wristwatch",category:"Accessories",price:22000,image:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80"},
- {id:8,name:"Stylish Shoulder Bag",category:"Bags",price:26000,image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=700&q=80"}
+{id:1,name:"Classic Men's Outfit",category:"Men",price:35000,image:"https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=700&q=80"},
+{id:2,name:"Elegant Women's Dress",category:"Women",price:42000,image:"https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=700&q=80"},
+{id:3,name:"Premium Sneakers",category:"Shoes",price:28000,image:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80"},
+{id:4,name:"Luxury Handbag",category:"Bags",price:32000,image:"https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=700&q=80"},
+{id:5,name:"Casual Men's Shirt",category:"Men",price:18000,image:"https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=700&q=80"},
+{id:6,name:"Women's Fashion Set",category:"Women",price:39000,image:"https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=80"},
+{id:7,name:"Fashion Wristwatch",category:"Accessories",price:22000,image:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80"},
+{id:8,name:"Stylish Shoulder Bag",category:"Bags",price:26000,image:"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=700&q=80"}
 ];
+
 let category="All";
 let cart=[];
 
-function money(n){return n.toLocaleString("en-NG")}
+function money(n){
+return n.toLocaleString("en-NG");
+}
+
 function renderProducts(){
- const q=document.getElementById("search").value.toLowerCase();
- const filtered=products.filter(p=>(category==="All"||p.category===category)&&(p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)));
- document.getElementById("products").innerHTML=filtered.length?filtered.map(p=>`
- <article class="product">
- <img src="${p.image}" alt="${p.name}" loading="lazy">
- <div class="product-info">
- <small>${p.category}</small><h3>${p.name}</h3>
- <div class="price">₦${money(p.price)}</div>
- <button class="add" onclick="addToCart(${p.id})">Add to Cart</button>
- </div></article>`).join(""):'<div class="empty">No products found.</div>';
+const q=document.getElementById("search").value.toLowerCase();
+
+const filtered=products.filter(p=>
+(category==="All"||p.category===category)&&
+(p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q))
+);
+
+document.getElementById("products").innerHTML=filtered.length?
+filtered.map(p=>`
+<article class="product">
+<img src="${p.image}" alt="${p.name}" loading="lazy">
+<div class="product-info">
+<small>${p.category}</small>
+<h3>${p.name}</h3>
+<div class="price">₦${money(p.price)}</div>
+<button class="add" onclick="addToCart(${p.id})">Add to Cart</button>
+</div>
+</article>`).join("")
+:'<div class="empty">No products found.</div>';
 }
+
 function setCategory(value,button){
- category=value;
- document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
- button.classList.add("active");
- renderProducts();
+category=value;
+document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
+button.classList.add("active");
+renderProducts();
 }
+
 function addToCart(id){
- const item=cart.find(p=>p.id===id);
- if(item)item.quantity++;
- else cart.push({...products.find(p=>p.id===id),quantity:1});
- updateCart();
+const item=cart.find(p=>p.id===id);
+if(item)item.quantity++;
+else cart.push({...products.find(p=>p.id===id),quantity:1});
+updateCart();
 }
+
 function updateCart(){
- document.getElementById("cartCount").textContent=cart.reduce((s,p)=>s+p.quantity,0);
- document.getElementById("cartItems").innerHTML=cart.length?cart.map(p=>`
- <div class="cart-item"><div><strong>${p.name}</strong><p>₦${money(p.price)} × ${p.quantity}</p></div>
- <button onclick="removeItem(${p.id})">Remove</button></div>`).join(""):"<p>Your cart is empty.</p>";
- document.getElementById("cartTotal").textContent=money(cart.reduce((s,p)=>s+p.price*p.quantity,0));
+document.getElementById("cartCount").textContent=cart.reduce((s,p)=>s+p.quantity,0);
+
+document.getElementById("cartItems").innerHTML=cart.length?
+cart.map(p=>`
+<div class="cart-item">
+<div><strong>${p.name}</strong><p>₦${money(p.price)} × ${p.quantity}</p></div>
+<button onclick="removeItem(${p.id})">Remove</button>
+</div>`).join("")
+:"<p>Your cart is empty.</p>";
+
+document.getElementById("cartTotal").textContent=money(
+cart.reduce((s,p)=>s+p.price*p.quantity,0)
+);
 }
-function removeItem(id){cart=cart.filter(p=>p.id!==id);updateCart()}
-function openCart(){document.getElementById("cartPanel").classList.add("open");document.getElementById("overlay").classList.add("open")}
-function closeCart(){document.getElementById("cartPanel").classList.remove("open");document.getElementById("overlay").classList.remove("open")}
+
+function removeItem(id){
+cart=cart.filter(p=>p.id!==id);
+updateCart();
+}
+
+function openCart(){
+document.getElementById("cartPanel").classList.add("open");
+document.getElementById("overlay").classList.add("open");
+}
+
+function closeCart(){
+document.getElementById("cartPanel").classList.remove("open");
+document.getElementById("overlay").classList.remove("open");
+}
+
 function checkout(){
- if(!cart.length){alert("Your cart is empty.");return}
- alert("Your cart is ready. Online checkout will be connected when we set up your Blazy Store accounts and Supabase order system.");
+if(!cart.length){
+alert("Your cart is empty.");
+return;
 }
+alert("Your cart is ready. Online checkout will be connected when we set up the order system.");
+}
+
+// ACCOUNT FUNCTIONS
+
+function openAccount(){
+document.getElementById("accountModal").classList.add("open");
+
+if(currentUser){
+showDashboard();
+}else{
+showAuthMode("login");
+}
+}
+
+function closeAccount(){
+document.getElementById("accountModal").classList.remove("open");
+}
+
+function showAuthMode(mode){
+authMode=mode;
+
+document.getElementById("authView").style.display="block";
+document.getElementById("dashboardView").style.display="none";
+
+document.getElementById("loginTab").classList.toggle("active",mode==="login");
+document.getElementById("signupTab").classList.toggle("active",mode==="signup");
+
+document.getElementById("nameField").style.display=mode==="signup"?"block":"none";
+
+document.getElementById("authPassword").autocomplete=mode==="signup"?"new-password":"current-password";
+
+document.getElementById("authSubmit").textContent=mode==="signup"?"Create account":"Log in";
+
+document.getElementById("authMessage").textContent="";
+}
+
+function setAuthMessage(message,type){
+const el=document.getElementById("authMessage");
+el.textContent=message;
+el.className="account-message "+(type||"");
+}
+
+function showDashboard(){
+document.getElementById("authView").style.display="none";
+document.getElementById("dashboardView").style.display="block";
+
+document.getElementById("dashboardName").textContent=
+(currentUser.user_metadata&&currentUser.user_metadata.full_name)||"Not provided";
+
+document.getElementById("dashboardEmail").textContent=currentUser.email||"";
+
+document.getElementById("accountButton").textContent="My Dashboard";
+}
+
+function showSignedOut(){
+currentUser=null;
+document.getElementById("accountButton").textContent="My Account";
+}
+
+// REGISTRATION AND LOGIN
+
+document.getElementById("authForm").addEventListener("submit",async function(event){
+
+event.preventDefault();
+
+if(!supabaseClient){
+setAuthMessage("Supabase could not load. Please refresh and try again.","error");
+return;
+}
+
+const email=document.getElementById("authEmail").value.trim();
+const password=document.getElementById("authPassword").value;
+
+const submit=document.getElementById("authSubmit");
+
+submit.disabled=true;
+submit.textContent=authMode==="signup"?"Creating account...":"Signing in...";
+
+setAuthMessage("Please wait...");
+
+try{
+
+if(authMode==="signup"){
+
+const fullName=document.getElementById("fullName").value.trim();
+
+if(!fullName){
+setAuthMessage("Please enter your full name.","error");
+return;
+}
+
+const {data,error}=await supabaseClient.auth.signUp({
+email:email,
+password:password,
+options:{
+data:{full_name:fullName},
+emailRedirectTo:"https://black12-byt.github.io/blazy-store/"
+}
+});
+
+if(error)throw error;
+
+if(data.session){
+
+currentUser=data.user;
+showDashboard();
+
+}else{
+
+showAuthMode("login");
+
+setAuthMessage(
+"Account created successfully! Please check your email and confirm your account before logging in.",
+"success"
+);
+
+}
+
+}else{
+
+const {data,error}=await supabaseClient.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error)throw error;
+
+currentUser=data.user;
+showDashboard();
+
+}
+
+}catch(error){
+
+setAuthMessage(error.message||"Something went wrong. Please try again.","error");
+
+}finally{
+
+submit.disabled=false;
+submit.textContent=authMode==="signup"?"Create account":"Log in";
+
+}
+
+});
+
+// LOGOUT
+
+async function signOut(){
+
+if(!supabaseClient)return;
+
+const button=document.getElementById("signOutBtn");
+button.disabled=true;
+
+try{
+
+const {error}=await supabaseClient.auth.signOut();
+
+if(error)throw error;
+
+showSignedOut();
+closeAccount();
+
+}catch(error){
+
+document.getElementById("dashboardMessage").textContent=
+error.message||"Could not log out. Try again.";
+
+}finally{
+
+button.disabled=false;
+
+}
+
+}
+
+// CHECK EXISTING LOGIN SESSION
+
+async function refreshSession(){
+
+if(!supabaseClient)return;
+
+const {data,error}=await supabaseClient.auth.getSession();
+
+if(error){
+console.error(error.message);
+return;
+}
+
+currentUser=data.session?data.session.user:null;
+
+document.getElementById("accountButton").textContent=
+currentUser?"My Dashboard":"My Account";
+}
+
+if(supabaseClient){
+
+supabaseClient.auth.onAuthStateChange((_event,session)=>{
+
+currentUser=session?session.user:null;
+
+document.getElementById("accountButton").textContent=
+currentUser?"My Dashboard":"My Account";
+
+if(currentUser&&document.getElementById("accountModal").classList.contains("open")){
+showDashboard();
+}
+
+});
+
+}
+
 document.getElementById("year").textContent=new Date().getFullYear();
+
 renderProducts();
 updateCart();
+refreshSession();
+
 </script>
 </body>
-    </html>
-    
+  </html>
