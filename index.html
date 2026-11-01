@@ -278,10 +278,13 @@ nav a{font-size:12px}
 <div><strong>Email:</strong> <span id="dashboardEmail">—</span></div>
 </div>
 
-<div class="dashboard-actions">
+<div class="dashboard-actions" style="flex-wrap:wrap">
+<button id="adminButton" style="display:none;background:#d6ad65;color:#111"
+onclick="openAdminDashboard()">Admin Dashboard</button>
+
 <button id="signOutBtn" onclick="signOut()">Log out</button>
 <button id="closeDashboardBtn" onclick="closeAccount()">Close</button>
-</div>
+  </div>
 
 <p id="dashboardMessage" class="account-message"></p>
 </div>
