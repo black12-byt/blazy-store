@@ -565,6 +565,127 @@ async function loadAdminProducts(){
         `;
 
     }).join("");
+  let editingImageUrl = "";
+
+function resetProductForm(){
+
+    document.getElementById("productForm").reset();
+
+    document.getElementById("productId").value = "";
+
+    document.getElementById("productStock").value = "1";
+
+    document.getElementById("productMessage").textContent = "";
+
+    document.getElementById("saveProductButton").textContent = "Save Product";
+
+    editingImageUrl = "";
+
+}
+
+document.getElementById("productForm").addEventListener("submit", async function(event){
+
+    event.preventDefault();
+
+    const button = document.getElementById("saveProductButton");
+    const message = document.getElementById("productMessage");
+
+    button.disabled = true;
+    button.textContent = "Saving...";
+    message.textContent = "";
+
+    try{
+
+        const {data:isAdmin,error:adminError} = await supabaseClient.rpc("is_admin");
+
+        if(adminError || isAdmin !== true){
+            throw new Error("You are not authorized to manage products.");
+        }
+
+        const productId = document.getElementById("productId").value;
+
+        const file = document.getElementById("productImage").files[0];
+
+        let imageUrl = editingImageUrl;
+
+        if(file){
+
+            const filePath = Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g,"-");
+
+            const {error:uploadError} = await supabaseClient.storage
+                .from("product-images")
+                .upload(filePath,file,{
+                    contentType:file.type,
+                    upsert:false
+                });
+
+            if(uploadError) throw uploadError;
+
+            const {data:publicData} = supabaseClient.storage
+                .from("product-images")
+                .getPublicUrl(filePath);
+
+            imageUrl = publicData.publicUrl;
+
+        }
+
+        const productData = {
+
+            name: document.getElementById("productName").value.trim(),
+
+            description: document.getElementById("productDescription").value.trim(),
+
+            price: Number(document.getElementById("productPrice").value),
+
+            category: document.getElementById("productCategory").value,
+
+            image_url: imageUrl,
+
+            stock: Number(document.getElementById("productStock").value),
+
+            is_active: true
+
+        };
+
+        if(productId){
+
+            const {error} = await supabaseClient
+                .from("products")
+                .update(productData)
+                .eq("id",productId);
+
+            if(error) throw error;
+
+            message.textContent = "Product updated successfully!";
+
+        }else{
+
+            const {error} = await supabaseClient
+                .from("products")
+                .insert([productData]);
+
+            if(error) throw error;
+
+            message.textContent = "Product added successfully!";
+
+        }
+
+        resetProductForm();
+
+        await loadAdminProducts();
+
+    }catch(error){
+
+        message.textContent = error.message || "Could not save product.";
+
+    }finally{
+
+        button.disabled = false;
+        button.textContent = "Save Product";
+
+    }
+
+});
 
 }
 
