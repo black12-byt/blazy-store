@@ -476,6 +476,29 @@ async function showDashboard(){
         adminButton.style.display = "block";
     }
   }
+  async function openAdminDashboard(){
+
+    if(!supabaseClient || !currentUser){
+        alert("Please log in first.");
+        return;
+    }
+
+    const {data,error}=await supabaseClient.rpc("is_admin");
+
+    if(error || data!==true){
+        alert("You are not authorized to access the Admin Dashboard.");
+        return;
+    }
+
+    document.getElementById("accountModal").classList.remove("open");
+
+    document.getElementById("dashboardView").style.display="none";
+
+    document.getElementById("adminView").style.display="block";
+
+    loadAdminProducts();
+
+  }
 
 function showSignedOut(){
 currentUser=null;
