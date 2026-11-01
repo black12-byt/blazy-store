@@ -158,6 +158,79 @@ nav a{font-size:12px}
 <div class="total">Total: ₦<span id="cartTotal">0</span></div>
 <button class="checkout" onclick="checkout()">Continue to checkout</button>
 </aside>
+  <!-- BLAZY STORE ADMIN DASHBOARD -->
+
+<div id="adminView" style="display:none;padding:25px;background:#faf9f6;min-height:70vh">
+
+    <h2>Blazy Store Admin Dashboard</h2>
+    <p>Manage your store products.</p>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:20px 0">
+        <button onclick="showDashboard()" style="padding:12px">
+            My Account
+        </button>
+
+        <button onclick="loadAdminProducts()" style="padding:12px">
+            Refresh Products
+        </button>
+    </div>
+
+    <h3>Add or Edit Product</h3>
+
+    <form id="productForm" style="background:white;padding:18px;border-radius:8px;margin:15px 0">
+
+        <input type="hidden" id="productId">
+
+        <label>Product Name</label>
+        <input id="productName" required
+        style="display:block;width:100%;padding:12px;margin:8px 0">
+
+        <label>Description</label>
+        <textarea id="productDescription"
+        style="display:block;width:100%;padding:12px;margin:8px 0"></textarea>
+
+        <label>Price (₦)</label>
+        <input id="productPrice" type="number" min="0" step="0.01" required
+        style="display:block;width:100%;padding:12px;margin:8px 0">
+
+        <label>Category</label>
+        <select id="productCategory" required
+        style="display:block;width:100%;padding:12px;margin:8px 0">
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Shoes">Shoes</option>
+            <option value="Bags">Bags</option>
+            <option value="Accessories">Accessories</option>
+        </select>
+
+        <label>Product Image</label>
+        <input id="productImage" type="file" accept="image/jpeg,image/png,image/webp"
+        style="display:block;width:100%;padding:12px;margin:8px 0">
+
+        <label>Stock Quantity</label>
+        <input id="productStock" type="number" min="0" value="1"
+        style="display:block;width:100%;padding:12px;margin:8px 0">
+
+        <button type="submit" id="saveProductButton"
+        style="background:#111;color:white;padding:14px;width:100%;border:0;border-radius:5px;margin-top:15px">
+            Save Product
+        </button>
+
+        <button type="button" onclick="resetProductForm()"
+        style="padding:12px;margin-top:10px;width:100%">
+            Clear Form
+        </button>
+
+        <p id="productMessage"></p>
+
+    </form>
+
+    <h3>Existing Products</h3>
+    <div id="adminProducts" style="margin-top:15px">
+        Loading products...
+    </div>
+
+</div>
 
 <!-- CUSTOMER REGISTRATION AND LOGIN -->
 
