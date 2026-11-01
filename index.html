@@ -686,6 +686,74 @@ document.getElementById("productForm").addEventListener("submit", async function
     }
 
 });
+  function editProduct(id){
+
+    const product = adminProductRows.find(item => item.id === id);
+
+    if(!product){
+        alert("Product not found.");
+        return;
+    }
+
+    document.getElementById("productId").value = product.id;
+    document.getElementById("productName").value = product.name || "";
+    document.getElementById("productDescription").value = product.description || "";
+    document.getElementById("productPrice").value = product.price || 0;
+    document.getElementById("productCategory").value = product.category || "Men";
+    document.getElementById("productStock").value = product.stock || 0;
+
+    document.getElementById("productImage").value = "";
+
+    editingImageUrl = product.image_url || "";
+
+    document.getElementById("saveProductButton").textContent = "Update Product";
+
+    document.getElementById("productMessage").textContent =
+        "Editing: " + product.name;
+
+    document.getElementById("productForm").scrollIntoView({
+        behavior:"smooth"
+    });
+
+}
+
+async function deleteProduct(id){
+
+    const product = adminProductRows.find(item => item.id === id);
+
+    if(!product) return;
+
+    if(!confirm("Are you sure you want to delete " + product.name + "?")){
+        return;
+    }
+
+    try{
+
+        const {data:isAdmin,error:adminError} =
+            await supabaseClient.rpc("is_admin");
+
+        if(adminError || isAdmin !== true){
+            throw new Error("You are not authorized to delete products.");
+        }
+
+        const {error} = await supabaseClient
+            .from("products")
+            .delete()
+            .eq("id",id);
+
+        if(error) throw error;
+
+        alert("Product deleted successfully.");
+
+        await loadAdminProducts();
+
+    }catch(error){
+
+        alert(error.message || "Could not delete product.");
+
+    }
+
+}
 
 }
 
