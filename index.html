@@ -477,4 +477,160 @@ box.textContent="Please log in first.";
 return;
 }
 
-const {dat
+const {data,error}=await supabaseClient.from("products")
+.select("*").order("created_at",{ascending:false});
+
+if(error){
+box.textContent="Could not load products: "+error.message;
+console.error(error);
+return;
+}
+
+adminProductRows=data||[];
+if(!adminProductRows.length){
+box.textContent="No products have been added yet.";
+return;
+}
+
+box.innerHTML=adminProductRows.map(p=>`
+<div class="admin-product">
+<h4>${escapeHTML(p.name)}</h4>
+<p>Price: ₦${money(p.price)}</p>
+<p>Stock: ${Number(p.stock||0)}</p>
+<p>Category: ${escapeHTML(p.category)}</p>
+<div class="admin-product-actions">
+<button style="background:#eee" onclick="editProduct('${p.id}')">Edit</button>
+<button style="background:#b00020;color:white" onclick="deleteProduct('${p.id}')">Delete</button>
+</div>
+</div>`).join("");
+}
+
+function editProduct(id){
+const p=adminProductRows.find(x=>String(x.id)===String(id));
+if(!p){alert("Product not found. Refresh the list.");return;}
+
+$("productId").value=p.id;
+$("productName").value=p.name||"";
+$("productDescription").value=p.description||"";
+$("productPrice").value=p.price??"";
+$("productCategory").value=p.category||"Men";
+$("productStock").value=p.stock??0;
+$("productImage").value="";
+editingImageUrl=p.image_url||"";
+$("saveProductButton").textContent="Update Product";
+setMessage("productMessage","Editing: "+p.name,"success");
+$("productForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+async function deleteProduct(id){
+const p=adminProductRows.find(x=>String(x.id)===String(id));
+if(!p||!confirm("Are you sure you want to delete "+p.name+"?"))return;
+
+try{
+const {data,error:authError}=await supabaseClient.rpc("is_admin");
+if(authError||data!==true)throw new Error("You are not authorised to delete products.");
+
+const {error}=await supabaseClient.from("products").delete().eq("id",id);
+if(error)throw error;
+
+await loadAdminProducts();
+await fetchStoreProducts();
+alert("Product deleted successfully.");
+}catch(err){
+alert(err.message||"Could not delete product.");
+}
+}
+
+$("productForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const btn=$("saveProductButton");
+btn.disabled=true;
+btn.textContent="Saving...";
+setMessage("productMessage","");
+
+let imagePath=null;
+try{
+if(!supabaseClient||!currentUser)throw new Error("Please log in again.");
+
+const {data:isAdmin,error:adminError}=await supabaseClient.rpc("is_admin");
+if(adminError||isAdmin!==true)throw new Error("You are not authorised to manage products.");
+
+const id=$("productId").value;
+const file=$("productImage").files[0];
+let imageUrl=editingImageUrl;
+
+if(file){
+if(file.size>2*1024*1024)throw new Error("Image must be 2 MB or smaller.");
+if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Choose a JPG, PNG or WebP image.");
+
+imagePath=Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"-");
+const {error:upError}=await supabaseClient.storage.from("product-images")
+.upload(imagePath,file,{contentType:file.type,upsert:false});
+if(upError)throw upError;
+
+imageUrl=supabaseClient.storage.from("product-images").getPublicUrl(imagePath).data.publicUrl;
+}
+
+const productData={
+name:$("productName").value.trim(),
+description:$("productDescription").value.trim(),
+price:Number($("productPrice").value),
+category:$("productCategory").value,
+image_url:imageUrl||null,
+stock:Number($("productStock").value),
+is_active:true
+};
+
+if(!productData.name||!Number.isFinite(productData.price)||productData.price<0||!Number.isInteger(productData.stock)||productData.stock<0){
+throw new Error("Check product name, price and stock.");
+}
+
+const result=id
+?await supabaseClient.from("products").update(productData).eq("id",id)
+:await supabaseClient.from("products").insert([productData]);
+
+if(result.error)throw result.error;
+
+resetProductForm();
+await loadAdminProducts();
+await fetchStoreProducts();
+setMessage("productMessage",id?"Product updated successfully!":"Product added successfully!","success");
+
+}catch(err){
+console.error("Product save failed:",err);
+setMessage("productMessage",err.message||"Could not save product.","error");
+}finally{
+btn.disabled=false;
+btn.textContent=$("productId").value?"Update Product":"Save Product";
+}
+});
+
+async function refreshSession(){
+if(!supabaseClient){
+$("storeMessage").textContent="Could not connect to the store service.";
+return;
+}
+const {data,error}=await supabaseClient.auth.getSession();
+if(error)console.error(error);
+currentUser=data?.session?.user||null;
+$("accountButton").textContent=currentUser?"My Dashboard":"My Account";
+}
+
+if(supabaseClient){
+supabaseClient.auth.onAuthStateChange((_event,session)=>{
+currentUser=session?.user||null;
+$("accountButton").textContent=currentUser?"My Dashboard":"My Account";
+if(!currentUser){
+$("adminView").style.display="none";
+$("adminButton").style.display="none";
+}
+});
+}
+
+$("year").textContent=new Date().getFullYear();
+updateCart();
+fetchStoreProducts();
+refreshSession();
+</script>
+</body>
+</html>
