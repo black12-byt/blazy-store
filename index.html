@@ -58,6 +58,16 @@ footer p{color:#aaa;margin-top:10px;font-size:14px}
 .cart-item button{border:0;background:none;color:#a33}
 .total{font-size:20px;font-weight:bold;margin:22px 0}
 .checkout{width:100%;padding:14px;background:#111;color:white;border:0;border-radius:4px;font-weight:bold}
+.checkout-modal{display:none;position:fixed;inset:0;z-index:35;background:#0009;align-items:center;justify-content:center;padding:16px}
+.checkout-modal.open{display:flex}
+.checkout-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:white;border-radius:10px;padding:22px}
+.checkout-card label,.settings-form label{display:block;font-size:13px;font-weight:bold;margin:12px 0 6px}
+.checkout-card input,.checkout-card textarea,.checkout-card select,.settings-form input{width:100%;padding:12px;border:1px solid #ccc;border-radius:5px}
+.checkout-card button,.settings-form button{padding:13px;border:0;border-radius:5px;margin-top:12px}
+.order-card{background:white;padding:16px;border:1px solid #ddd;border-radius:8px;margin:12px 0;max-width:850px}
+.settings-form{background:white;padding:18px;border:1px solid #eee;border-radius:8px;max-width:700px;margin:15px 0}
+.admin-section{margin-top:32px}
+.wa-link{display:inline-block;background:#168b50;color:white;padding:13px 18px;border-radius:5px;text-decoration:none;font-weight:bold;margin-top:12px}
 .account-modal{display:none;position:fixed;inset:0;z-index:40;background:#0009;align-items:center;justify-content:center;padding:18px}
 .account-modal.open{display:flex}
 .account-card{width:min(440px,100%);max-height:90vh;overflow:auto;background:white;border-radius:10px;padding:25px}
@@ -158,14 +168,64 @@ header{padding:15px 4%}
 <button class="checkout" onclick="checkout()">Continue to checkout</button>
 </aside>
 
+<div class="checkout-modal" id="checkoutModal" onclick="if(event.target===this)closeCheckout()">
+<div class="checkout-card">
+<button class="account-close" onclick="closeCheckout()">×</button>
+<h2>Complete Your Order</h2>
+<p class="muted">You can order as a guest or while logged in.</p>
+<form id="checkoutForm">
+<label for="orderName">Full name</label>
+<input id="orderName" required maxlength="120" autocomplete="name">
+<label for="orderEmail">Email (optional)</label>
+<input id="orderEmail" type="email" autocomplete="email">
+<label for="orderPhone">WhatsApp / Phone number</label>
+<input id="orderPhone" required type="tel" maxlength="30" autocomplete="tel">
+<label for="orderAddress">Delivery address</label>
+<textarea id="orderAddress" required rows="3"></textarea>
+<label for="paymentMethod">Payment method</label>
+<select id="paymentMethod" required></select>
+<div id="bankDetailsBox" style="display:none;background:#f6f3ed;padding:13px;border-radius:6px;margin-top:12px;line-height:1.7"></div>
+<div class="total">Order total: ₦<span id="checkoutTotal">0</span></div>
+<button type="submit" id="placeOrderButton" style="width:100%;background:#111;color:white">Place Order</button>
+<p id="checkoutMessage" class="account-message" aria-live="polite"></p>
+<div id="whatsappResult"></div>
+</form>
+</div>
+</div>
+
 <section id="adminView">
 <h2>Blazy Store Admin Dashboard</h2>
-<p>Manage your store products.</p>
+<p>Manage your store products and customer orders.</p>
 <div class="admin-toolbar">
 <button onclick="backToAccount()">My Account</button>
 <button onclick="loadAdminProducts()">Refresh Products</button>
+<button onclick="loadAdminOrders()">Refresh Orders</button>
 </div>
-<h3>Add or Edit Product</h3>
+
+<div class="admin-section">
+<h3>Store & Payment Settings</h3>
+<form id="settingsForm" class="settings-form">
+<label for="settingBankName">Bank name</label>
+<input id="settingBankName" placeholder="e.g. Access Bank">
+<label for="settingAccountName">Account name</label>
+<input id="settingAccountName" placeholder="Account holder name">
+<label for="settingAccountNumber">Account number</label>
+<input id="settingAccountNumber" inputmode="numeric" maxlength="20" placeholder="Bank account number">
+<label for="settingWhatsapp">WhatsApp number (international format, digits only)</label>
+<input id="settingWhatsapp" inputmode="tel" placeholder="2348012345678">
+<label><input id="settingBankEnabled" type="checkbox" style="width:auto"> Enable Bank Transfer</label>
+<label><input id="settingPodEnabled" type="checkbox" style="width:auto"> Enable Pay on Delivery</label>
+<button type="submit" style="background:#111;color:white">Save Store Settings</button>
+<p id="settingsMessage" class="account-message"></p>
+</form>
+</div>
+
+<div class="admin-section">
+<h3>Customer Orders</h3>
+<div id="adminOrders">Loading orders...</div>
+</div>
+
+<h3 class="admin-section">Add or Edit Product</h3>
 <form id="productForm" class="product-form">
 <input type="hidden" id="productId">
 <label for="productName">Product Name</label>
@@ -236,401 +296,3 @@ header{padding:15px 4%}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-"use strict";
-
-const SUPABASE_URL="https://jbdiyyjzphunyiefsofc.supabase.co";
-const SUPABASE_ANON_KEY="sb_publishable_6_s73n8HEXPnrdOWlww3GQ_gBgoHmsC";
-const supabaseClient=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
-
-let currentUser=null;
-let authMode="login";
-let category="All";
-let products=[];
-let cart=[];
-let adminProductRows=[];
-let editingImageUrl="";
-
-const $=id=>document.getElementById(id);
-const money=n=>Number(n||0).toLocaleString("en-NG");
-const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-
-function setMessage(id,message,type=""){
-const el=$(id);
-el.textContent=message;
-el.className="account-message "+type;
-}
-
-async function fetchStoreProducts(){
-$("storeMessage").textContent="Loading products...";
-if(!supabaseClient){
-products=[];
-renderProducts();
-$("storeMessage").textContent="Store connection could not start. Refresh the page.";
-return;
-}
-const {data,error}=await supabaseClient.from("products")
-.select("id,name,description,price,category,image_url,stock,is_active")
-.eq("is_active",true)
-.order("created_at",{ascending:false});
-
-if(error){
-console.error(error);
-products=[];
-renderProducts();
-$("storeMessage").textContent="Products could not load: "+error.message;
-return;
-}
-
-products=(data||[]).map(p=>({...p,image:p.image_url||"https://placehold.co/600x700?text=Blazy+Store",price:Number(p.price||0)}));
-renderProducts();
-$("storeMessage").textContent=products.length?"":"No products are available yet. Please check back soon.";
-}
-
-function renderProducts(){
-const q=$("search").value.trim().toLowerCase();
-const list=products.filter(p=>(category==="All"||p.category===category)&&((p.name||"").toLowerCase().includes(q)||(p.category||"").toLowerCase().includes(q)));
-
-$("products").innerHTML=list.length?list.map(p=>`
-<article class="product">
-<img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.name)}" loading="lazy">
-<div class="product-info">
-<small>${escapeHTML(p.category)}</small>
-<h3>${escapeHTML(p.name)}</h3>
-<p>${escapeHTML(p.description||"")}</p>
-<div class="price">₦${money(p.price)}</div>
-<button class="add" onclick="addToCart('${String(p.id)}')" ${Number(p.stock)<=0?"disabled":""}>${Number(p.stock)<=0?"Out of stock":"Add to Cart"}</button>
-</div>
-</article>`).join(""):'<div class="empty">No products found.</div>';
-}
-
-function setCategory(value,button){
-category=value;
-document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
-button.classList.add("active");
-renderProducts();
-}
-
-function addToCart(id){
-const p=products.find(x=>String(x.id)===String(id));
-if(!p)return;
-const item=cart.find(x=>String(x.id)===String(id));
-if(item){
-if(item.quantity>=Number(p.stock)){
-alert("You have added all available stock.");
-return;
-}
-item.quantity++;
-}else cart.push({...p,quantity:1});
-updateCart();
-}
-
-function removeItem(id){
-cart=cart.filter(p=>String(p.id)!==String(id));
-updateCart();
-}
-
-function updateCart(){
-$("cartCount").textContent=cart.reduce((s,p)=>s+p.quantity,0);
-$("cartItems").innerHTML=cart.length?cart.map(p=>`
-<div class="cart-item">
-<div><strong>${escapeHTML(p.name)}</strong><p>₦${money(p.price)} × ${p.quantity}</p></div>
-<button onclick="removeItem('${String(p.id)}')">Remove</button>
-</div>`).join(""):"<p>Your cart is empty.</p>";
-$("cartTotal").textContent=money(cart.reduce((s,p)=>s+p.price*p.quantity,0));
-}
-
-function openCart(){
-$("cartPanel").classList.add("open");
-$("overlay").classList.add("open");
-}
-function closeCart(){
-$("cartPanel").classList.remove("open");
-$("overlay").classList.remove("open");
-}
-function checkout(){
-if(!cart.length){alert("Your cart is empty.");return;}
-alert("Your cart is ready. Online payment and order processing have not been connected yet.");
-}
-
-function openAccount(){
-$("accountModal").classList.add("open");
-if(currentUser)showDashboard();
-else showAuthMode("login");
-}
-function closeAccount(){$("accountModal").classList.remove("open");}
-
-function showAuthMode(mode){
-authMode=mode;
-$("authView").style.display="block";
-$("dashboardView").style.display="none";
-$("loginTab").classList.toggle("active",mode==="login");
-$("signupTab").classList.toggle("active",mode==="signup");
-$("nameField").style.display=mode==="signup"?"block":"none";
-$("authPassword").autocomplete=mode==="signup"?"new-password":"current-password";
-$("authSubmit").textContent=mode==="signup"?"Create account":"Log in";
-setMessage("authMessage","");
-}
-
-async function showDashboard(){
-if(!currentUser)return;
-$("adminView").style.display="none";
-$("authView").style.display="none";
-$("dashboardView").style.display="block";
-$("accountModal").classList.add("open");
-$("dashboardName").textContent=currentUser.user_metadata?.full_name||"Not provided";
-$("dashboardEmail").textContent=currentUser.email||"";
-$("accountButton").textContent="My Dashboard";
-$("adminButton").style.display="none";
-
-const {data,error}=await supabaseClient.rpc("is_admin");
-if(error){console.error("Admin check:",error);return;}
-if(data===true)$("adminButton").style.display="block";
-}
-
-async function openAdminDashboard(){
-if(!currentUser||!supabaseClient){alert("Please log in first.");return;}
-const {data,error}=await supabaseClient.rpc("is_admin");
-if(error||data!==true){
-alert("Your account is not authorised as an administrator.");
-return;
-}
-closeAccount();
-$("adminView").style.display="block";
-$("adminView").scrollIntoView({behavior:"smooth"});
-await loadAdminProducts();
-}
-
-function backToAccount(){
-$("adminView").style.display="none";
-openAccount();
-}
-
-$("authForm").addEventListener("submit",async e=>{
-e.preventDefault();
-if(!supabaseClient){
-setMessage("authMessage","Supabase connection is unavailable.","error");
-return;
-}
-const btn=$("authSubmit");
-btn.disabled=true;
-btn.textContent=authMode==="signup"?"Creating account...":"Logging in...";
-setMessage("authMessage","");
-try{
-const email=$("authEmail").value.trim();
-const password=$("authPassword").value;
-let result;
-
-if(authMode==="signup"){
-result=await supabaseClient.auth.signUp({
-email,password,
-options:{data:{full_name:$("fullName").value.trim()}}
-});
-}else{
-result=await supabaseClient.auth.signInWithPassword({email,password});
-}
-
-if(result.error)throw result.error;
-
-if(authMode==="signup"&&!result.data.session){
-setMessage("authMessage","Account created. Check your email to confirm your account, then log in.","success");
-}else{
-currentUser=result.data.user||result.data.session?.user||null;
-await showDashboard();
-setMessage("dashboardMessage","You are logged in.","success");
-}
-}catch(err){
-setMessage("authMessage",err.message||"Authentication failed.","error");
-}finally{
-btn.disabled=false;
-btn.textContent=authMode==="signup"?"Create account":"Log in";
-}
-});
-
-async function signOut(){
-if(!supabaseClient)return;
-const {error}=await supabaseClient.auth.signOut();
-if(error){alert(error.message);return;}
-currentUser=null;
-$("adminView").style.display="none";
-$("accountButton").textContent="My Account";
-$("adminButton").style.display="none";
-$("dashboardView").style.display="none";
-showAuthMode("login");
-$("accountModal").classList.add("open");
-}
-
-function resetProductForm(){
-$("productForm").reset();
-$("productId").value="";
-$("productStock").value="1";
-$("productMessage").textContent="";
-$("saveProductButton").textContent="Save Product";
-editingImageUrl="";
-}
-
-async function loadAdminProducts(){
-const box=$("adminProducts");
-box.textContent="Loading products...";
-if(!supabaseClient||!currentUser){
-box.textContent="Please log in first.";
-return;
-}
-
-const {data,error}=await supabaseClient.from("products")
-.select("*").order("created_at",{ascending:false});
-
-if(error){
-box.textContent="Could not load products: "+error.message;
-console.error(error);
-return;
-}
-
-adminProductRows=data||[];
-if(!adminProductRows.length){
-box.textContent="No products have been added yet.";
-return;
-}
-
-box.innerHTML=adminProductRows.map(p=>`
-<div class="admin-product">
-<h4>${escapeHTML(p.name)}</h4>
-<p>Price: ₦${money(p.price)}</p>
-<p>Stock: ${Number(p.stock||0)}</p>
-<p>Category: ${escapeHTML(p.category)}</p>
-<div class="admin-product-actions">
-<button style="background:#eee" onclick="editProduct('${p.id}')">Edit</button>
-<button style="background:#b00020;color:white" onclick="deleteProduct('${p.id}')">Delete</button>
-</div>
-</div>`).join("");
-}
-
-function editProduct(id){
-const p=adminProductRows.find(x=>String(x.id)===String(id));
-if(!p){alert("Product not found. Refresh the list.");return;}
-
-$("productId").value=p.id;
-$("productName").value=p.name||"";
-$("productDescription").value=p.description||"";
-$("productPrice").value=p.price??"";
-$("productCategory").value=p.category||"Men";
-$("productStock").value=p.stock??0;
-$("productImage").value="";
-editingImageUrl=p.image_url||"";
-$("saveProductButton").textContent="Update Product";
-setMessage("productMessage","Editing: "+p.name,"success");
-$("productForm").scrollIntoView({behavior:"smooth",block:"start"});
-}
-
-async function deleteProduct(id){
-const p=adminProductRows.find(x=>String(x.id)===String(id));
-if(!p||!confirm("Are you sure you want to delete "+p.name+"?"))return;
-
-try{
-const {data,error:authError}=await supabaseClient.rpc("is_admin");
-if(authError||data!==true)throw new Error("You are not authorised to delete products.");
-
-const {error}=await supabaseClient.from("products").delete().eq("id",id);
-if(error)throw error;
-
-await loadAdminProducts();
-await fetchStoreProducts();
-alert("Product deleted successfully.");
-}catch(err){
-alert(err.message||"Could not delete product.");
-}
-}
-
-$("productForm").addEventListener("submit",async e=>{
-e.preventDefault();
-const btn=$("saveProductButton");
-btn.disabled=true;
-btn.textContent="Saving...";
-setMessage("productMessage","");
-
-let imagePath=null;
-try{
-if(!supabaseClient||!currentUser)throw new Error("Please log in again.");
-
-const {data:isAdmin,error:adminError}=await supabaseClient.rpc("is_admin");
-if(adminError||isAdmin!==true)throw new Error("You are not authorised to manage products.");
-
-const id=$("productId").value;
-const file=$("productImage").files[0];
-let imageUrl=editingImageUrl;
-
-if(file){
-if(file.size>2*1024*1024)throw new Error("Image must be 2 MB or smaller.");
-if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Choose a JPG, PNG or WebP image.");
-
-imagePath=Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"-");
-const {error:upError}=await supabaseClient.storage.from("product-images")
-.upload(imagePath,file,{contentType:file.type,upsert:false});
-if(upError)throw upError;
-
-imageUrl=supabaseClient.storage.from("product-images").getPublicUrl(imagePath).data.publicUrl;
-}
-
-const productData={
-name:$("productName").value.trim(),
-description:$("productDescription").value.trim(),
-price:Number($("productPrice").value),
-category:$("productCategory").value,
-image_url:imageUrl||null,
-stock:Number($("productStock").value),
-is_active:true
-};
-
-if(!productData.name||!Number.isFinite(productData.price)||productData.price<0||!Number.isInteger(productData.stock)||productData.stock<0){
-throw new Error("Check product name, price and stock.");
-}
-
-const result=id
-?await supabaseClient.from("products").update(productData).eq("id",id)
-:await supabaseClient.from("products").insert([productData]);
-
-if(result.error)throw result.error;
-
-resetProductForm();
-await loadAdminProducts();
-await fetchStoreProducts();
-setMessage("productMessage",id?"Product updated successfully!":"Product added successfully!","success");
-
-}catch(err){
-console.error("Product save failed:",err);
-setMessage("productMessage",err.message||"Could not save product.","error");
-}finally{
-btn.disabled=false;
-btn.textContent=$("productId").value?"Update Product":"Save Product";
-}
-});
-
-async function refreshSession(){
-if(!supabaseClient){
-$("storeMessage").textContent="Could not connect to the store service.";
-return;
-}
-const {data,error}=await supabaseClient.auth.getSession();
-if(error)console.error(error);
-currentUser=data?.session?.user||null;
-$("accountButton").textContent=currentUser?"My Dashboard":"My Account";
-}
-
-if(supabaseClient){
-supabaseClient.auth.onAuthStateChange((_event,session)=>{
-currentUser=session?.user||null;
-$("accountButton").textContent=currentUser?"My Dashboard":"My Account";
-if(!currentUser){
-$("adminView").style.display="none";
-$("adminButton").style.display="none";
-}
-});
-}
-
-$("year").textContent=new Date().getFullYear();
-updateCart();
-fetchStoreProducts();
-refreshSession();
-</script>
-</body>
-</html>
