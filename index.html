@@ -520,5 +520,14 @@ updateCart();
 fetchStoreProducts();
 refreshSession();
 </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/blazy-store/service-worker.js")
+      .then(() => console.log("Blazy Store app ready"))
+      .catch(error => console.error("Service worker error:", error));
+  });
+}
+  </script>
 </body>
 </html>
